@@ -80,7 +80,9 @@ async def update_action_plan(
 # response body. Returning ``None`` (the default implicit return value) would
 # still instruct FastAPI to serialize ``null`` in the body, which raises an
 # assertion during application startup. Declaring ``response_class=Response``
-# and returning an explicit empty ``Response`` avoids the problem.
+# returning an explicit empty ``Response`` avoids the problem, and annotating
+# the endpoint accordingly prevents FastAPI from assuming a response model for
+# status code 204.
 @router.delete(
     "/{action_plan_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -90,7 +92,7 @@ async def delete_action_plan(
     action_plan_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.contributor)),
-) -> None:
+) -> Response:
     action_plan = db.get(ActionPlan, action_plan_id)
     if not action_plan:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan d'action introuvable")

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from alembic import op
 import sqlalchemy as sa
-${imports if imports}
+${imports if imports else ""}
 
 
 def upgrade() -> None:
