@@ -1,0 +1,12 @@
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+SQLAlchemy==2.0.25
+alembic==1.13.1
+pydantic==1.10.15
+python-multipart==0.0.9
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+requests==2.31.0
+APScheduler==3.10.4
+email-validator==2.1.1
+python-dotenv==1.0.1
