@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
@@ -64,12 +64,14 @@ async def update_version(
     return version
 
 
-@router.delete("/{version_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{version_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_version(
     version_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.contributor)),
-) -> None:
+) -> Response:
     version = db.get(Version, version_id)
     if not version:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version introuvable")
@@ -86,3 +88,4 @@ async def delete_version(
     )
     db.add(event)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

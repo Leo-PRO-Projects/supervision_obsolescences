@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -72,12 +72,14 @@ async def update_dependency(
     return dependency
 
 
-@router.delete("/{dependency_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{dependency_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_dependency(
     dependency_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.contributor)),
-) -> None:
+) -> Response:
     dependency = db.get(Dependency, dependency_id)
     if not dependency:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dépendance introuvable")
@@ -94,3 +96,4 @@ async def delete_dependency(
     )
     db.add(event)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
