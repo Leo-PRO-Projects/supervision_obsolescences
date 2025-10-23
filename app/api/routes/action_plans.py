@@ -79,9 +79,13 @@ async def update_action_plan(
 # FastAPI enforces that a route returning a 204 status code does not emit any
 # response body. Returning ``None`` (the default implicit return value) would
 # still instruct FastAPI to serialize ``null`` in the body, which raises an
-# assertion during application startup. We therefore return an explicit empty
-# ``Response`` with the desired status code.
-@router.delete("/{action_plan_id}", status_code=status.HTTP_204_NO_CONTENT)
+# assertion during application startup. Declaring ``response_class=Response``
+# and returning an explicit empty ``Response`` avoids the problem.
+@router.delete(
+    "/{action_plan_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
 async def delete_action_plan(
     action_plan_id: int,
     db: Session = Depends(get_db),
