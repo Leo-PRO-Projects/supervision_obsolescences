@@ -1,0 +1,4 @@
+*.md text diff
+*.html text diff
+*.js text diff
+*.py text diff

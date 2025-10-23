@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supervision des obsolescences</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/dashboard.js" defer></script>
+    <style>[x-cloak]{display:none !important;}</style>
+  </head>
+  <body class="bg-gray-100 text-gray-900">
+    <header class="bg-indigo-700 text-white py-6 shadow-md">
+      <div class="max-w-7xl mx-auto px-4">
+        <h1 class="text-3xl font-bold">Supervision des obsolescences</h1>
+        <p class="mt-2 text-indigo-100">
+          Inventaire centralisé, analytics et alertes pour anticiper les risques.
+        </p>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8" x-data="dashboard()" x-init="init()">
+      <section class="bg-white rounded-lg shadow p-6 mb-6" x-show="!token">
+        <h2 class="text-xl font-semibold mb-4">Connexion</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              x-model="credentials.email"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="utilisateur@example.com"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Mot de passe</label>
+            <input
+              type="password"
+              x-model="credentials.password"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="********"
+            />
+          </div>
+        </div>
+        <div class="mt-4">
+          <button
+            @click="login()"
+            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            Se connecter
+          </button>
+        </div>
+      </section>
+
+      <div x-show="token" x-cloak>
+        <div class="flex justify-end mb-6">
+          <button
+            @click="logout()"
+            class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200"
+          >
+            Déconnexion
+          </button>
+        </div>
+      <section class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Filtres</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Projet</label>
+            <select
+              x-model="filters.project"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Tous</option>
+              <template x-for="project in projectOptions" :key="project.id">
+                <option :value="project.id" x-text="project.name"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Criticité</label>
+            <select
+              x-model="filters.criticity"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Toutes</option>
+              <option value="faible">Faible</option>
+              <option value="moyenne">Moyenne</option>
+              <option value="haute">Haute</option>
+              <option value="critique">Critique</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Statut</label>
+            <select
+              x-model="filters.status"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Tous</option>
+              <option value="active">Actif</option>
+              <option value="obsolète">Obsolète</option>
+              <option value="retirée">Retirée</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Recherche</label>
+            <input
+              type="text"
+              x-model="filters.search"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Application, propriétaire..."
+            />
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <button
+            @click="loadApplications()"
+            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            Appliquer
+          </button>
+          <button
+            @click="resetFilters()"
+            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6" x-show="metrics">
+          <h3 class="text-lg font-semibold">Indicateurs clés</h3>
+          <ul class="mt-4 space-y-2" x-show="metrics">
+            <li class="flex justify-between"><span>Total inventaire</span><span x-text="metrics.total_items"></span></li>
+            <li class="flex justify-between text-red-600"><span>Éléments obsolètes</span><span x-text="metrics.obsolete_count"></span></li>
+            <template x-for="(value, label) in Object.entries(metrics.expiring_soon || {})" :key="label">
+              <li class="flex justify-between">
+                <span x-text="label"></span>
+                <span x-text="value"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6" x-show="metrics">
+          <h3 class="text-lg font-semibold">Statuts de remédiation</h3>
+          <canvas id="remediationChart" class="mt-4 h-56"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6" x-show="metrics">
+          <h3 class="text-lg font-semibold">Priorités</h3>
+          <ul class="mt-4 space-y-2">
+            <template x-for="item in metrics.top_priorities" :key="item.application + item.label">
+              <li class="border border-gray-200 rounded p-3 flex justify-between items-center">
+                <div>
+                  <p class="font-semibold" x-text="item.application + ' - ' + item.label"></p>
+                  <p class="text-sm text-gray-600" x-text="'Échéance: ' + item.deadline"></p>
+                </div>
+                <span
+                  class="px-2 py-1 rounded text-white text-xs"
+                  :class="item.criticity === 'critique' ? 'bg-red-600' : item.criticity === 'haute' ? 'bg-orange-500' : 'bg-green-500'"
+                  x-text="item.criticity || 'N/A'"
+                ></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-lg shadow p-6 mb-6" x-show="metrics">
+        <h3 class="text-lg font-semibold">Histogramme des échéances</h3>
+        <canvas id="timelineChart" class="mt-4 h-64"></canvas>
+      </section>
+
+      <section class="bg-white rounded-lg shadow p-6 mb-6" x-show="metrics">
+        <h3 class="text-lg font-semibold">Dépendances partagées sensibles</h3>
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Dépendance</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Applications</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fin de support</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="dep in metrics.shared_dependency_alerts" :key="dep.dependency_name + dep.end_of_support">
+              <tr>
+                <td class="px-4 py-2" x-text="dep.dependency_name"></td>
+                <td class="px-4 py-2">
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold" :class="badgeColor(dep.urgency_color)" x-text="dep.shared_by.join(', ')"></span>
+                </td>
+                <td class="px-4 py-2" x-text="dep.end_of_support || 'N/A'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Applications</h2>
+          <button
+            @click="exportCsv()"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Export CSV
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Projet</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Propriétaire</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Criticité</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <template x-for="app in applications" :key="app.id">
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2 font-medium text-indigo-700" x-text="app.name"></td>
+                  <td class="px-4 py-2" x-text="projectsById[app.project_id] || 'N/A'"></td>
+                  <td class="px-4 py-2" x-text="app.owner || 'N/A'"></td>
+                  <td class="px-4 py-2" x-text="app.criticity"></td>
+                  <td class="px-4 py-2" x-text="app.status"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      </div>
+    </main>
+
+    <footer class="mt-12 py-6 text-center text-sm text-gray-500">
+      © <span x-text="new Date().getFullYear()"></span> Supervision des obsolescences — MVP
+    </footer>
+  </body>
+</html>
