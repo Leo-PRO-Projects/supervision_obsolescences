@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
@@ -75,6 +75,12 @@ async def update_action_plan(
     return action_plan
 
 
+# NOTE:
+# FastAPI enforces that a route returning a 204 status code does not emit any
+# response body. Returning ``None`` (the default implicit return value) would
+# still instruct FastAPI to serialize ``null`` in the body, which raises an
+# assertion during application startup. We therefore return an explicit empty
+# ``Response`` with the desired status code.
 @router.delete("/{action_plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_action_plan(
     action_plan_id: int,
@@ -97,3 +103,4 @@ async def delete_action_plan(
     )
     db.add(event)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
