@@ -30,33 +30,35 @@ from app.tasks.scheduler import start_scheduler
 
 configure_logging()
 logger = logging.getLogger(__name__)
-settings = get_settings()
+app_settings = get_settings()
 
-app = FastAPI(title=settings.app_name, openapi_url=f"{settings.api_v1_str}/openapi.json")
+app = FastAPI(
+    title=app_settings.app_name, openapi_url=f"{app_settings.api_v1_str}/openapi.json"
+)
 
-if settings.backend_cors_origins:
+if app_settings.backend_cors_origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.backend_cors_origins,
+        allow_origins=app_settings.backend_cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-app.include_router(auth.router, prefix=settings.api_v1_str)
-app.include_router(projects.router, prefix=settings.api_v1_str)
-app.include_router(applications.router, prefix=settings.api_v1_str)
-app.include_router(versions.router, prefix=settings.api_v1_str)
-app.include_router(dependencies.router, prefix=settings.api_v1_str)
-app.include_router(comments.router, prefix=settings.api_v1_str)
-app.include_router(action_plans.router, prefix=settings.api_v1_str)
-app.include_router(timeline.router, prefix=settings.api_v1_str)
-app.include_router(notifications.router, prefix=settings.api_v1_str)
-app.include_router(dashboard.router, prefix=settings.api_v1_str)
-app.include_router(import_export.router, prefix=settings.api_v1_str)
-app.include_router(catalog.router, prefix=settings.api_v1_str)
-app.include_router(settings.router, prefix=settings.api_v1_str)
-app.include_router(users.router, prefix=settings.api_v1_str)
+app.include_router(auth.router, prefix=app_settings.api_v1_str)
+app.include_router(projects.router, prefix=app_settings.api_v1_str)
+app.include_router(applications.router, prefix=app_settings.api_v1_str)
+app.include_router(versions.router, prefix=app_settings.api_v1_str)
+app.include_router(dependencies.router, prefix=app_settings.api_v1_str)
+app.include_router(comments.router, prefix=app_settings.api_v1_str)
+app.include_router(action_plans.router, prefix=app_settings.api_v1_str)
+app.include_router(timeline.router, prefix=app_settings.api_v1_str)
+app.include_router(notifications.router, prefix=app_settings.api_v1_str)
+app.include_router(dashboard.router, prefix=app_settings.api_v1_str)
+app.include_router(import_export.router, prefix=app_settings.api_v1_str)
+app.include_router(catalog.router, prefix=app_settings.api_v1_str)
+app.include_router(settings.router, prefix=app_settings.api_v1_str)
+app.include_router(users.router, prefix=app_settings.api_v1_str)
 
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 

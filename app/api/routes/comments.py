@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -85,12 +85,14 @@ async def update_comment(
     return comment
 
 
-@router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{comment_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_comment(
     comment_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> None:
+) -> Response:
     comment = db.get(Comment, comment_id)
     if not comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Commentaire introuvable")
@@ -109,3 +111,4 @@ async def delete_comment(
     )
     db.add(event)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

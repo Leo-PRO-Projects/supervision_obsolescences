@@ -9,11 +9,11 @@ from pydantic import BaseSettings, EmailStr, Field, validator
 class Settings(BaseSettings):
     app_name: str = "Obsolescence Supervisor"
     api_v1_str: str = "/api/v1"
-    secret_key: str = Field(..., env="SECRET_KEY")
+    secret_key: str = Field("change-me", env="SECRET_KEY")
     access_token_expire_minutes: int = 60 * 24
     backend_cors_origins: List[str] = Field(default_factory=list)
 
-    database_url: str = Field(..., env="DATABASE_URL")
+    database_url: str = Field("sqlite:///./obsolescences.db", env="DATABASE_URL")
 
     smtp_host: Optional[str] = Field(None, env="SMTP_HOST")
     smtp_port: int = Field(587, env="SMTP_PORT")

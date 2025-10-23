@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
@@ -61,14 +61,17 @@ async def update_project(
     return project
 
 
-@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{project_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_project(
     project_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.admin)),
-) -> None:
+) -> Response:
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projet introuvable")
     db.delete(project)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

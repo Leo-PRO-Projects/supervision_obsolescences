@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -53,14 +53,17 @@ async def update_setting(
     return setting
 
 
-@router.delete("/{setting_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{setting_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_setting(
     setting_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.admin)),
-) -> None:
+) -> Response:
     setting = db.get(GlobalSetting, setting_id)
     if not setting:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paramètre introuvable")
     db.delete(setting)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

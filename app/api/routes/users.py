@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -66,14 +66,15 @@ async def update_user(
     return user
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.admin)),
-) -> None:
+) -> Response:
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable")
     db.delete(user)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
@@ -50,14 +50,17 @@ async def update_catalog_entry(
     return entry
 
 
-@router.delete("/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{entry_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_catalog_entry(
     entry_id: int,
     db: Session = Depends(get_db),
     __: None = Depends(require_role(UserRole.contributor)),
-) -> None:
+) -> Response:
     entry = db.get(TechnologyLifecycle, entry_id)
     if not entry:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entrée introuvable")
     db.delete(entry)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
