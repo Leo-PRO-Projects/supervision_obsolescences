@@ -300,3 +300,12 @@ class CorrectiveActionUpdate(BaseModel):
 
 class CorrectiveAction(CorrectiveActionBase, TimestampMixin):
     id: int
+
+
+# Resolve forward references for nested relationships
+ApplicationDetail.update_forward_refs(
+    Version=Version,
+    Dependency=Dependency,
+    ActionPlan=ActionPlan,
+    Comment=Comment,
+)
