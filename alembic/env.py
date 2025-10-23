@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from logging.config import fileConfig
 from pathlib import Path
+import sys
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import get_settings
 from app.core.database import Base
